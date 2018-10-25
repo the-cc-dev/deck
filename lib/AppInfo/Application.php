@@ -37,6 +37,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IURLGenerator;
 use OCP\INavigationManager;
+use OutOfBoundsException;
 
 class Application extends App {
 
@@ -129,16 +130,18 @@ class Application extends App {
 
 	public function registerCommentsEntity() {
 		$this->getContainer()->getServer()->getEventDispatcher()->addListener(CommentsEntityEvent::EVENT_ENTITY, function(CommentsEntityEvent $event) {
-			$event->addEntityCollection('deckCard', function($name) {
-				/** @var CardMapper */
-				$service = $this->getContainer()->query(CardMapper::class);
-				try {
-					$service->find((int) $name);
-				} catch (\InvalidArgumentException $e) {
-					return false;
-				}
-				return true;
-			});
+			try {
+				$event->addEntityCollection('deckCard', function ($name) {
+					/** @var CardMapper */
+					$service = $this->getContainer()->query(CardMapper::class);
+					try {
+						$service->find((int)$name);
+					} catch (\InvalidArgumentException $e) {
+						return false;
+					}
+					return true;
+				});
+			} catch (OutOfBoundsException $exception) {}
 		});
 		$this->registerCommentsEventHandler();
 	}
